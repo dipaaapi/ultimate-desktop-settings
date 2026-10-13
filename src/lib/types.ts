@@ -159,3 +159,6 @@ export interface Countdown {
 }
 
 export type Fired = { kind: 'alarm'; id: string; label: string; tone: Tone } | { kind: 'countdown'; label: string };
+
+/** Which side of the rod boards and bead names open on. */
+export type Placement = 'below' | 'above';

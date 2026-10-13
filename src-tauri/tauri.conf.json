@@ -15,13 +15,14 @@
         "label": "main",
         "title": "Ultimate Windows Desktop Settings",
         "width": 1180,
-        "height": 720,
-        "minWidth": 360,
-        "minHeight": 520,
+        "height": 280,
         "center": true,
         "visible": false,
-        "resizable": true,
-        "backgroundColor": "#15171c"
+        "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "skipTaskbar": true
       }
     ],
     "security": {
@@ -30,14 +31,24 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
+    "targets": [
+      "nsis"
+    ],
     "publisher": "EdMaster28",
     "copyright": "© 2026 EdMaster28",
     "category": "Utility",
     "shortDescription": "Windows desktop settings on a silver rod.",
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico", "icons/icon.png"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
     "windows": {
-      "nsis": { "installMode": "currentUser" }
+      "nsis": {
+        "installMode": "currentUser"
+      }
     }
   }
 }

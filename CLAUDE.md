@@ -17,4 +17,5 @@ Windows settings utility. Tauri 2 + Rust (2024) + React 19 + TypeScript 6. The r
 - Never shell out to PowerShell; use the `windows` crate.
 - Destructive actions (cleaning temp, emptying the Recycle Bin, removing entries) need a confirm step in the UI.
 - Close apps gracefully (WM_CLOSE), never kill them.
-- Layout must hold at any window size: horizontal rod when wide, vertical when narrow or tall (`lib/layout.ts`).
+- The desktop app is a floating rod: transparent, no title bar, no background (`.desktop` CSS). The window grows only while a board is open, towards the roomier side (`uds-core/src/window_layout.rs`). Minimize-to-tray and shut down live on the title badge.
+- The browser preview must still hold at any window size: horizontal rod when wide, vertical when narrow or tall (`lib/layout.ts`).

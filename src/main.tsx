@@ -4,6 +4,10 @@ import App from './App';
 import { ToastProvider } from './components/Toasts';
 import { PreferencesProvider } from './lib/theme';
 import './styles.css';
+import { isDesktop } from './lib/api';
+
+// The desktop app has no window background: only the rod, beads and boards show.
+document.documentElement.classList.toggle('desktop', isDesktop);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

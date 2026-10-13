@@ -4,7 +4,7 @@ import { Dismiss24Regular } from '@fluentui/react-icons';
 import { CATEGORIES, findBead } from '../beads';
 import { Loading } from './ui';
 
-export function Board({ openId, onClose }: { openId: string | null; onClose: () => void }) {
+export function Board({ openId, onClose, onClosed }: { openId: string | null; onClose: () => void; onClosed?: () => void }) {
   const bead = openId ? findBead(openId) : undefined;
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -20,7 +20,7 @@ export function Board({ openId, onClose }: { openId: string | null; onClose: () 
   }, [bead, onClose]);
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={onClosed}>
       {bead && (
         <div className="board-layer" key="layer">
           <motion.div

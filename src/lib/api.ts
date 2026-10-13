@@ -15,6 +15,7 @@ import type {
   InstalledApp,
   NoteMeta,
   Overview,
+  Placement,
   Preferences,
   RecycleBinSummary,
   ShortcutInfo,
@@ -99,6 +100,13 @@ export const api = {
   startCountdown: (seconds: number, label: string) => call<Countdown>('start_countdown', { seconds, label }),
   cancelCountdown: () => call<void>('cancel_countdown'),
   countdownState: () => call<Countdown | null>('countdown_state'),
+
+  // The floating window (desktop app only; the preview answers with defaults).
+  setWindowMode: (mode: 'rod' | 'board') => call<Placement>('set_window_mode', { mode }),
+  windowPlacement: () => call<Placement>('window_placement'),
+  startDragging: () => call<void>('start_dragging'),
+  hideToTray: () => call<void>('hide_to_tray'),
+  quitApp: () => call<void>('quit_app'),
 };
 
 /** Lets the user pick a program for a new startup entry. */

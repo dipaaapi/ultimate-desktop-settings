@@ -44,9 +44,21 @@ describe('App', () => {
   it('lists the tech stack in About & Credits', async () => {
     const user = userEvent.setup();
     renderApp();
-    await user.click(screen.getByRole('button', { name: /Open About/ }));
+    await user.click(screen.getByRole('button', { name: /^About & Credits:/ }));
     const dialog = await screen.findByRole('dialog', { name: 'About & Credits' });
     expect(await within(dialog).findByText('The tech stack is listed here.')).toBeInTheDocument();
     for (const name of ['Tauri', 'Rust', 'React', 'TypeScript']) expect(within(dialog).getByText(name)).toBeInTheDocument();
+    expect(within(dialog).getByText('Built with Claude')).toBeInTheDocument();
+  });
+
+  it('shows minimize and shut down when the title is clicked', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    expect(screen.queryByRole('button', { name: 'Shut down' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Show minimize and shut down/ }));
+    expect(screen.getByRole('button', { name: 'Minimize to tray' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Shut down' }));
+    // The preview cannot quit; it says so instead.
+    expect(await screen.findByText(/works in the Windows app/)).toBeInTheDocument();
   });
 });

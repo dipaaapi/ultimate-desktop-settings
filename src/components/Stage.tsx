@@ -4,8 +4,11 @@ import { CATEGORIES, LEFT_BEADS, RIGHT_BEADS, type BeadDef } from '../beads';
 import { scaleFor } from '../lib/magnify';
 import { spreadOffsets } from '../lib/layout';
 import { TitleBadge } from './TitleBadge';
+import { api, isDesktop } from '../lib/api';
 
 const SPRING = { stiffness: 420, damping: 32, mass: 0.6 };
+/** How far (px) a press must move before it drags the rod instead of clicking. */
+const DRAG_THRESHOLD = 5;
 
 interface ItemMotion {
   scale: MotionValue<number>;
@@ -16,12 +19,14 @@ export function Stage({
   vertical,
   openId,
   onOpen,
-  onOpenAbout,
+  onMinimize,
+  onShutdown,
 }: {
   vertical: boolean;
   openId: string | null;
   onOpen: (id: string) => void;
-  onOpenAbout: () => void;
+  onMinimize: () => void;
+  onShutdown: () => void;
 }) {
   // In the upright layout the title sits on top and every bead hangs below it.
   const order: (BeadDef | 'badge')[] = useMemo(
@@ -95,7 +100,30 @@ export function Stage({
     [motions, order],
   );
 
+  // Desktop app: press anywhere on the rod (beads and badge included) and drag to move it.
+  const press = useRef<{ x: number; y: number; dragged: boolean } | null>(null);
+  const onPointerDown = (e: React.PointerEvent) => {
+    press.current = isDesktop && e.button === 0 ? { x: e.screenX, y: e.screenY, dragged: false } : null;
+  };
+  const dragIfMoved = (e: React.PointerEvent) => {
+    const p = press.current;
+    if (!p || p.dragged || !(e.buttons & 1)) return;
+    if (Math.hypot(e.screenX - p.x, e.screenY - p.y) < DRAG_THRESHOLD) return;
+    p.dragged = true;
+    magnifyAt(null);
+    void api.startDragging();
+  };
+  // A press that turned into a drag must not also open a bead.
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (press.current?.dragged) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    press.current = null;
+  };
+
   const onPointerMove = (e: React.PointerEvent) => {
+    dragIfMoved(e);
     if (e.pointerType === 'touch') return;
     const rect = contentRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -129,7 +157,14 @@ export function Stage({
 
   return (
     <div className={`stage ${vertical ? 'vertical' : 'horizontal'}`}>
-      <div className="track" ref={trackRef} onPointerMove={onPointerMove} onPointerLeave={() => magnifyAt(null)}>
+      <div
+        className="track"
+        ref={trackRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerLeave={() => magnifyAt(null)}
+        onClickCapture={onClickCapture}
+      >
         <div className="track-content" ref={contentRef} onKeyDown={onKeyDown} role="toolbar" aria-orientation={vertical ? 'vertical' : 'horizontal'} aria-label={`Settings, ${beadCount} beads`}>
           <div className="rod" aria-hidden="true">
             <span className="rod-cap start" />
@@ -138,7 +173,7 @@ export function Stage({
           {order.map((item, i) =>
             item === 'badge' ? (
               <MovingItem key="badge" motion={motions[i]} innerRef={(el) => (itemRefs.current[i] = el)} vertical={vertical} className="badge-slot">
-                <TitleBadge onClick={onOpenAbout} />
+                <TitleBadge onMinimize={onMinimize} onShutdown={onShutdown} />
               </MovingItem>
             ) : (
               <MovingItem key={item.id} motion={motions[i]} innerRef={(el) => (itemRefs.current[i] = el)} vertical={vertical} className="bead-slot">
