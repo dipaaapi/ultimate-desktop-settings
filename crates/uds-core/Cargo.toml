@@ -1,0 +1,42 @@
+[package]
+name = "uds-core"
+description = "System layer for Ultimate Windows Desktop Settings: registry, audio, display, apps and storage."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-registry = "0.6"
+windows = { version = "0.62", features = [
+  "Win32_Foundation",
+  "Win32_Graphics_Gdi",
+  "Win32_Media_Audio",
+  "Win32_Media_Audio_Endpoints",
+  "Win32_Devices_FunctionDiscovery",
+  "Win32_Security",
+  "Win32_Storage_FileSystem",
+  "Win32_System_Com",
+  "Win32_System_Com_StructuredStorage",
+  "Win32_System_Diagnostics_Debug",
+  "Win32_System_Diagnostics_ToolHelp",
+  "Win32_System_Services",
+  "Win32_System_Threading",
+  "Win32_System_Variant",
+  "Win32_UI_ColorSystem",
+  "Win32_UI_HiDpi",
+  "Win32_UI_Shell",
+  "Win32_UI_Shell_PropertiesSystem",
+  "Win32_UI_WindowsAndMessaging",
+] }
+
+[dev-dependencies]
+tempfile.workspace = true

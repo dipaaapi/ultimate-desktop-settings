@@ -1,0 +1,23 @@
+# docker compose up -d   ->  open http://localhost:8080 (or click the port in Docker Desktop)
+name: ultimate-windows-desktop-settings
+
+services:
+  ultimate-windows-desktop-settings:
+    container_name: ultimate-windows-desktop-settings
+    image: ultimate-windows-desktop-settings:preview
+    build:
+      context: .
+      target: preview
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  # docker compose --profile windows run --rm windows-app  ->  ./out/ultimate-windows-desktop-settings.exe
+  windows-app:
+    profiles: [windows]
+    image: ultimate-windows-desktop-settings:windows-build
+    build:
+      context: .
+      target: windows-app
+    volumes:
+      - ./out:/export

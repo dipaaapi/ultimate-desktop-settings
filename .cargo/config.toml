@@ -1,0 +1,4 @@
+# Lets `cargo test --target x86_64-pc-windows-gnu` run the Windows build of
+# the tests under Wine on Linux (used in CI and by contributors without Windows).
+[target.x86_64-pc-windows-gnu]
+runner = "wine"

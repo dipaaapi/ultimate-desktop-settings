@@ -1,0 +1,11 @@
+**/node_modules
+**/target
+dist
+out
+src-tauri/gen
+.git
+.github
+.claude
+docs
+*.md
+!README.md

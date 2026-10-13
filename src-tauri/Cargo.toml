@@ -1,0 +1,21 @@
+[package]
+name = "ultimate-windows-desktop-settings"
+description = "Ultimate Windows Desktop Settings"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2.12", features = ["tray-icon", "image-png"] }
+tauri-plugin-dialog = "2.8"
+tauri-plugin-single-instance = "2"
+uds-core = { path = "../crates/uds-core" }
+serde.workspace = true
+serde_json.workspace = true
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
