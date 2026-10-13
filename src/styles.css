@@ -1088,7 +1088,7 @@ button {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 900px), (max-height: 620px) {
-  :root {
+  :root:not(.desktop) {
     --bead-size: 52px;
     --bead-gap: 22px;
     --badge-size: 168px;
@@ -1099,7 +1099,7 @@ button {
 }
 
 @media (max-width: 520px), (max-height: 480px) {
-  :root {
+  :root:not(.desktop) {
     --bead-size: 46px;
     --bead-gap: 18px;
     --badge-size: 148px;
@@ -1111,6 +1111,97 @@ button {
   .badge-kicker {
     font-size: 9px;
   }
+}
+
+/* ---------- Title badge buttons ---------- */
+
+.title-badge-wrap {
+  position: relative;
+}
+.title-badge-wrap.controls-open .badge-version {
+  opacity: 0;
+}
+.badge-controls {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  translate: -50% 0;
+  z-index: 3;
+  display: flex;
+  gap: 12px;
+}
+.badge-control {
+  all: unset;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #1a1d23;
+  background: radial-gradient(circle at 35% 30%, #ffffff, #d5d9de 55%, #9aa1ab 100%);
+  box-shadow: 0 4px 10px -3px rgba(0, 0, 0, 0.55);
+  transition: transform 0.12s ease;
+}
+.badge-control:hover {
+  transform: scale(1.1);
+}
+.badge-control:focus-visible {
+  box-shadow: var(--focus);
+}
+.badge-control.shutdown {
+  color: #ffffff;
+  background: radial-gradient(circle at 35% 30%, #ff9f9f, #e5484d 55%, #9b1c1f 100%);
+}
+
+/* ---------- Desktop app: a floating rod with no window background ---------- */
+
+:root {
+  --rod-strip: 280px;
+}
+html.desktop,
+.desktop body {
+  background: transparent !important;
+}
+.desktop .scene {
+  flex: none;
+  height: var(--rod-strip);
+}
+.desktop .app.placement-above {
+  justify-content: flex-end;
+}
+.desktop .stage.horizontal .track-content {
+  padding: 0 110px;
+}
+.desktop .placement-below .stage.horizontal .bead-label {
+  bottom: auto;
+  top: calc(100% + 14px);
+  transform: translate(-50%, -6px) scale(0.92);
+}
+.desktop .placement-below .stage.horizontal .bead-label.visible {
+  transform: translate(-50%, 0) scale(1);
+}
+.desktop .board-layer {
+  top: var(--rod-strip);
+  bottom: 0;
+  padding: 0 16px 16px;
+}
+.desktop .placement-above .board-layer {
+  top: 0;
+  bottom: var(--rod-strip);
+  padding: 16px 16px 0;
+}
+.desktop .board-backdrop {
+  background: transparent;
+  backdrop-filter: none;
+}
+.desktop .board {
+  height: 100%;
+}
+.desktop .board-layer.alarm-layer {
+  top: 0;
+  bottom: 0;
+  padding: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

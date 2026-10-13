@@ -2,7 +2,11 @@
 
 One place for the Windows settings you change most: startup apps, sound, Night Light, File Explorer and taskbar options, Bluetooth, browsers, installed apps, timers and alarms, and quick notes.
 
-Every feature is a bead on a silver rod. Hover a bead to magnify it and see its name; click it and it widens into its board, where you manage that setting. The title badge sits in the middle of the rod. On narrow or tall windows the rod stands upright and boards open full screen.
+Every feature is a bead on a silver rod. Hover a bead to magnify it and see its name; click it and it widens into its board, where you manage that setting. The title badge sits in the middle of the rod.
+
+In the Windows app the rod floats on your desktop with no window, background or title bar around it. Press anywhere on it and drag to move it. Boards open below the rod when it sits high on the screen and above it when it sits low. Click the title badge for two buttons: minimize to the tray, or shut the app down.
+
+In the browser preview the rod stands upright on narrow or tall windows and boards open full screen.
 
 Version 2 is a rewrite of v1.5.0 (Flutter) with the same features done for real: a per-app volume mixer, a screen-wide Night Light, startup toggles that agree with Task Manager, and no PowerShell.
 
@@ -71,3 +75,5 @@ Settings, alarms and notes live in `%APPDATA%\UltimateWindowsDesktopSettings`. N
 ## Credits
 
 Developed by **EdMaster28** (Software Developer & Computer Instructor) · dipaaapi8@gmail.com
+
+Built with **Claude**, Anthropic's AI, through Claude Code. EdMaster28 gave the ideas, design and instructions; Claude wrote the code.

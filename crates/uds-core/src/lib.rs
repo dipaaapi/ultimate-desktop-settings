@@ -21,6 +21,7 @@ pub mod startup;
 pub mod system;
 pub mod temp;
 pub mod tweaks;
+pub mod window_layout;
 
 #[cfg(windows)]
 pub mod win;

@@ -5,6 +5,7 @@ mod commands;
 mod scheduler;
 mod state;
 mod tray;
+mod window;
 
 use tauri::{Manager, WindowEvent};
 
@@ -21,6 +22,11 @@ fn main() {
             let state = AppState::load();
             state.apply_startup_preferences(app.handle());
             app.manage(state);
+            app.manage(window::WindowState::default());
+            // Fit the rod to this screen before it first shows.
+            if let Some(main) = app.get_webview_window("main") {
+                let _ = window::apply(&main, &app.state::<window::WindowState>(), uds_core::window_layout::Mode::Rod);
+            }
             tray::create(app.handle())?;
             scheduler::start(app.handle().clone());
             if !start_minimized {

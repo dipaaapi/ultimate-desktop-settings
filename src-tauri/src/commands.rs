@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Manager, State, WebviewWindow};
 use uds_core::alarms::{Alarm, Countdown, Tone};
 use uds_core::apps::{self, InstalledApp};
 use uds_core::bluetooth::{self, BluetoothState};
@@ -17,9 +17,11 @@ use uds_core::startup::{self, StartupItem};
 use uds_core::system::{self, AudioState, DisplayInfo, RecycleBinSummary};
 use uds_core::temp::{self, CleanResult, TempSummary};
 use uds_core::tweaks::{self, TweakState};
+use uds_core::window_layout::{Mode, Placement};
 use uds_core::{Error, Result};
 
 use crate::state::AppState;
+use crate::window::{self, WindowState};
 
 type Cmd<'a> = State<'a, AppState>;
 
@@ -76,6 +78,11 @@ pub fn handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'static 
         start_countdown,
         cancel_countdown,
         countdown_state,
+        set_window_mode,
+        window_placement,
+        start_dragging,
+        hide_to_tray,
+        quit_app,
     ]
 }
 
@@ -435,4 +442,37 @@ async fn cancel_countdown(state: Cmd<'_>) -> Result<()> {
 #[tauri::command]
 async fn countdown_state(state: Cmd<'_>) -> Result<Option<Countdown>> {
     Ok(state.clock.lock().unwrap_or_else(|p| p.into_inner()).countdown.clone())
+}
+
+// ---- Floating window ----
+
+fn tauri_err(error: tauri::Error) -> Error {
+    Error::msg(error.to_string())
+}
+
+#[tauri::command]
+async fn set_window_mode(window: WebviewWindow, state: State<'_, WindowState>, mode: Mode) -> Result<Placement> {
+    window::apply(&window, &state, mode).map_err(tauri_err)
+}
+
+#[tauri::command]
+async fn window_placement(window: WebviewWindow, state: State<'_, WindowState>) -> Result<Placement> {
+    window::placement(&window, &state).map_err(tauri_err)
+}
+
+/// Lets the user move the rod by pressing anywhere on it and dragging.
+#[tauri::command]
+fn start_dragging(window: WebviewWindow) -> Result<()> {
+    window.start_dragging().map_err(tauri_err)
+}
+
+#[tauri::command]
+async fn hide_to_tray(window: WebviewWindow) -> Result<()> {
+    window.hide().map_err(tauri_err)
+}
+
+#[tauri::command]
+async fn quit_app(app: AppHandle) -> Result<()> {
+    app.exit(0);
+    Ok(())
 }

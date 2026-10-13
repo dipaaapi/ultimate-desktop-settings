@@ -12,6 +12,10 @@ export default function About() {
         <div className="list">
           <Row title="Version" description={info.data ? `${info.data.version} · ${info.data.platform}` : '…'} />
           <Row title="Developer" description="EdMaster28 · Software Developer & Computer Instructor · dipaaapi8@gmail.com" />
+          <Row
+            title="Built with Claude"
+            description="Written by Claude, Anthropic's AI, through Claude Code, following EdMaster28's ideas, design and instructions."
+          />
           {info.data && <Row title="Your data" description={<span className="mono">{info.data.dataDir}</span>} />}
         </div>
       </Section>

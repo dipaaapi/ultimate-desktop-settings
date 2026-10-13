@@ -382,6 +382,13 @@ function handle(command: string, args: Record<string, unknown>): unknown {
       if (s.countdownTimer) clearTimeout(s.countdownTimer);
       s.countdown = null;
       return null;
+    case 'set_window_mode':
+    case 'window_placement':
+      return 'below';
+    case 'start_dragging':
+    case 'hide_to_tray':
+    case 'quit_app':
+      return undefined;
     case 'countdown_state':
       return s.countdown;
     default:
