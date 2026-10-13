@@ -1,0 +1,22 @@
+* text=auto eol=lf
+*.png binary
+*.ico binary
+*.icns binary
+
+# GitHub's language bar shows only the app's stack: Rust and TypeScript.
+# Styles, the HTML shell, config scripts and the Docker/nginx files are not counted.
+*.css linguist-detectable=false
+*.html linguist-detectable=false
+*.js linguist-detectable=false
+*.mjs linguist-detectable=false
+*.cjs linguist-detectable=false
+*.ps1 linguist-detectable=false
+*.cmd linguist-detectable=false
+*.bat linguist-detectable=false
+*.sh linguist-detectable=false
+Dockerfile linguist-detectable=false
+docker/** linguist-vendored
+src-tauri/icons/** linguist-vendored
+src-tauri/gen/** linguist-generated
+Cargo.lock linguist-generated
+package-lock.json linguist-generated

@@ -1,0 +1,27 @@
+[workspace]
+members = ["crates/uds-core", "src-tauri"]
+# Plain `cargo test` on Linux/macOS checks the system core only; the Tauri
+# app is built and tested on Windows (see CI and the Dockerfile).
+default-members = ["crates/uds-core"]
+resolver = "3"
+
+[workspace.package]
+version = "2.0.0"
+edition = "2024"
+rust-version = "1.85"
+authors = ["EdMaster28 <dipaaapi8@gmail.com>"]
+license = "LicenseRef-Proprietary"
+repository = "https://github.com/dipaaapi/ultimate-desktop-settings"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tempfile = "3"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

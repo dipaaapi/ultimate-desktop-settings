@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -d node_modules ] || npm ci --no-audit --no-fund > /dev/null 2>&1 || echo 'npm ci failed; run it manually'"
+          }
+        ]
+      }
+    ]
+  }
+}
