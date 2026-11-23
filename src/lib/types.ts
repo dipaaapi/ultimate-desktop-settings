@@ -9,6 +9,8 @@ export interface Preferences {
   nightLightEnabled: boolean;
   nightLightStrength: number;
   worldClocks: string[];
+  /** Size of the whole app, 1 = 100% (0.6 to 1.6). */
+  uiScale: number;
 }
 
 export interface AppInfo {
@@ -41,7 +43,18 @@ export interface Overview {
   recycleBin: RecycleBinSummary;
 }
 
-export type StartupSource = 'userRun' | 'machineRun' | 'userFolder';
+export type StartupSource =
+  | 'userRun'
+  | 'userRunOnce'
+  | 'machineRun'
+  | 'machineRun32'
+  | 'machineRunOnce'
+  | 'userPolicy'
+  | 'machinePolicy'
+  | 'userFolder'
+  | 'commonFolder'
+  | 'storeApp'
+  | 'scheduledTask';
 
 export interface StartupItem {
   id: string;
@@ -49,7 +62,14 @@ export interface StartupItem {
   command: string;
   source: StartupSource;
   enabled: boolean;
+  /** Can be turned on and off (maybe after a UAC prompt). */
   editable: boolean;
+  /** Can be removed (maybe after a UAC prompt). */
+  removable: boolean;
+  /** Changing it shows Windows' admin prompt. */
+  needsAdmin: boolean;
+  /** Registry key, folder or task path. */
+  location: string;
 }
 
 export interface AudioDevice {
@@ -83,12 +103,50 @@ export interface DisplayInfo {
   primary: boolean;
 }
 
+/** Which board a setting shows on. */
+export type SettingsPage = 'look' | 'taskbar' | 'explorer' | 'system' | 'privacy' | 'input' | 'power';
+
+export interface RangeSpec {
+  min: number;
+  max: number;
+  step: number;
+  unit: string;
+}
+
+/** One Windows setting: a switch, a row of choices or a slider. */
 export interface TweakState {
   id: string;
   title: string;
   description: string;
+  page: SettingsPage;
   group: string;
+  toggle: boolean;
+  options: string[];
+  /** The option in effect; null when Windows holds a custom value. */
+  selected: number | null;
   enabled: boolean;
+  needsRestart: boolean;
+  range: RangeSpec | null;
+  value: number | null;
+}
+
+export interface PowerPlan {
+  id: string;
+  name: string;
+  active: boolean;
+}
+
+export interface BatteryStatus {
+  hasBattery: boolean;
+  percent: number | null;
+  pluggedIn: boolean;
+  charging: boolean;
+  saverOn: boolean;
+}
+
+export interface PowerInfo {
+  plans: PowerPlan[];
+  battery: BatteryStatus;
 }
 
 export type ServiceState = 'running' | 'stopped' | 'starting' | 'stopping' | 'unknown';

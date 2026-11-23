@@ -6,7 +6,7 @@ default-members = ["crates/uds-core"]
 resolver = "3"
 
 [workspace.package]
-version = "2.0.0"
+version = "2.1.0"
 edition = "2024"
 rust-version = "1.85"
 authors = ["EdMaster28 <dipaaapi8@gmail.com>"]

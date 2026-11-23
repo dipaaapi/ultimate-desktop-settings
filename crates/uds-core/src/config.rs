@@ -29,6 +29,19 @@ pub struct Preferences {
     pub night_light_strength: u8,
     /// IANA time zone names shown in the world clock.
     pub world_clocks: Vec<String>,
+    /// Size of the whole app, 1.0 = 100%. See [`clamp_ui_scale`].
+    pub ui_scale: f64,
+}
+
+pub const UI_SCALE_MIN: f64 = 0.6;
+pub const UI_SCALE_MAX: f64 = 1.6;
+
+/// Keeps the app size in range and on 5% steps; bad values fall back to 100%.
+pub fn clamp_ui_scale(scale: f64) -> f64 {
+    if !scale.is_finite() {
+        return 1.0;
+    }
+    ((scale.clamp(UI_SCALE_MIN, UI_SCALE_MAX) * 20.0).round()) / 20.0
 }
 
 impl Default for Preferences {
@@ -40,6 +53,7 @@ impl Default for Preferences {
             night_light_enabled: false,
             night_light_strength: 40,
             world_clocks: vec!["Europe/London".into(), "America/New_York".into(), "Asia/Tokyo".into()],
+            ui_scale: 1.0,
         }
     }
 }
@@ -69,6 +83,7 @@ impl ConfigStore {
         match serde_json::from_str::<AppConfig>(&text) {
             Ok(mut config) => {
                 config.preferences.night_light_strength = config.preferences.night_light_strength.min(100);
+                config.preferences.ui_scale = clamp_ui_scale(config.preferences.ui_scale);
                 config
             }
             Err(_) => {
@@ -107,13 +122,22 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         std::fs::write(
             dir.path().join("settings.json"),
-            r#"{"preferences":{"theme":"light","nightLightStrength":250}}"#,
+            r#"{"preferences":{"theme":"light","nightLightStrength":250,"uiScale":9.0}}"#,
         )
         .unwrap();
         let config = ConfigStore::new(dir.path()).load();
         assert_eq!(config.preferences.theme, ThemePreference::Light);
         assert!(config.preferences.close_to_tray);
         assert_eq!(config.preferences.night_light_strength, 100);
+        assert_eq!(config.preferences.ui_scale, UI_SCALE_MAX);
+    }
+
+    #[test]
+    fn ui_scale_is_clamped_to_steps() {
+        assert_eq!(clamp_ui_scale(0.1), UI_SCALE_MIN);
+        assert_eq!(clamp_ui_scale(1.234), 1.25);
+        assert_eq!(clamp_ui_scale(f64::NAN), 1.0);
+        assert_eq!(Preferences::default().ui_scale, 1.0);
     }
 
     #[test]

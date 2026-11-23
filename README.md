@@ -1,10 +1,14 @@
 # Ultimate Windows Desktop Settings
 
-One place for the Windows settings you change most: startup apps, sound, Night Light, File Explorer and taskbar options, Bluetooth, browsers, installed apps, timers and alarms, and quick notes.
+One place for your Windows desktop settings: wallpaper, theme and colors, taskbar and Start, File Explorer, multitasking, notifications, privacy and app permissions, mouse and keyboard, power, brightness and battery, sound, Night Light, Bluetooth, startup apps, browsers and installed apps, plus timers, alarms and quick notes. Every other Settings page is one click away under **Settings Shortcuts**.
 
 Every feature is a bead on a silver rod. Hover a bead to magnify it and see its name; click it and it widens into its board, where you manage that setting. The title badge sits in the middle of the rod.
 
 In the Windows app the rod floats on your desktop with no window, background or title bar around it. Press anywhere on it and drag to move it. Boards open below the rod when it sits high on the screen and above it when it sits low. Click the title badge for two buttons: minimize to the tray, or shut the app down.
+
+Drag the **App size** slider in **Preferences** to make the whole rod and its boards smaller or bigger (60% to 160%).
+
+**Startup Apps** lists every place Windows starts programs from at sign-in, including the ones Task Manager hides: 32-bit and all-users `Run` entries, the all-users Startup folder, Microsoft Store apps, scheduled tasks that run at sign-in, `RunOnce` and group policy entries. Entries that belong to all users ask for admin rights through the normal Windows prompt.
 
 In the browser preview the rod stands upright on narrow or tall windows and boards open full screen.
 
@@ -66,7 +70,10 @@ src               TypeScript + React: the rod, beads and boards
   boards/         one board per bead
   lib/api.ts      the only place the interface talks to Windows
   lib/mock.ts     sample data for the browser preview and tests
+  lib/mockSettings.ts  the settings catalog with sample values (regenerate when the Rust catalogs change)
 ```
+
+Settings live in two catalogs in `crates/uds-core`: `tweaks.rs` (per-user registry values) and `live.rs` (settings applied through system calls: mouse, keyboard, effects, power). The interface can only change ids from these lists.
 
 ## Your data
 

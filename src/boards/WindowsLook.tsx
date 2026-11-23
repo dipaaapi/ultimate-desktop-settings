@@ -1,41 +1,36 @@
-import { api } from '../lib/api';
+import { Image20Regular } from '@fluentui/react-icons';
+import { api, pickPicture } from '../lib/api';
 import { useAction } from '../lib/useAction';
 import { useAsync } from '../lib/useAsync';
-import type { TweakState } from '../lib/types';
-import { ErrorBox, Loading, Note, Row, Section, Switch } from '../components/ui';
+import { SettingsList } from '../components/SettingsList';
+import { Button, Row, Section } from '../components/ui';
 
 export default function WindowsLook() {
-  const tweaks = useAsync(api.listTweaks);
+  const wallpaper = useAsync(api.getWallpaper);
   const { busy, run } = useAction();
-
-  if (tweaks.error) return <ErrorBox message={tweaks.error} onRetry={tweaks.reload} />;
-  if (!tweaks.data) return <Loading rows={5} />;
-
-  const groups = new Map<string, TweakState[]>();
-  for (const t of tweaks.data) groups.set(t.group, [...(groups.get(t.group) ?? []), t]);
-
   return (
-    <>
-      {[...groups].map(([group, items]) => (
-        <Section key={group} title={group}>
+    <SettingsList
+      page="look"
+      before={
+        <Section title="Background">
           <div className="list">
-            {items.map((t) => (
-              <Row key={t.id} title={t.title} description={t.description}>
-                <Switch
-                  label={t.title}
-                  checked={t.enabled}
-                  disabled={busy === t.id}
-                  onChange={async (value) => {
-                    const next = await run(t.id, () => api.setTweak(t.id, value));
-                    if (next) tweaks.set(next);
-                  }}
-                />
-              </Row>
-            ))}
+            <Row title="Desktop picture" description={<span className="mono">{wallpaper.data ?? (wallpaper.loading ? 'Loading…' : 'Solid color or slideshow')}</span>}>
+              <Button
+                icon={<Image20Regular />}
+                disabled={busy === 'wallpaper'}
+                onClick={async () => {
+                  const picked = await pickPicture();
+                  if (!picked) return;
+                  const next = await run('wallpaper', () => api.setWallpaper(picked), 'Wallpaper changed.');
+                  if (next !== undefined) wallpaper.set(next);
+                }}
+              >
+                Choose picture
+              </Button>
+            </Row>
           </div>
         </Section>
-      ))}
-      <Note>Changes apply to your Windows account only. Some taskbar options need Windows 11 and may take a moment to appear.</Note>
-    </>
+      }
+    />
   );
 }

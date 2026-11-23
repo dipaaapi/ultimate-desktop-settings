@@ -3,10 +3,13 @@
 
 pub mod audio;
 pub mod display;
+pub mod params;
+pub mod power;
 pub mod process;
 pub mod registry;
 pub mod service;
 pub mod shell;
+pub mod tasks;
 
 /// Converts a Rust string to a null-terminated UTF-16 buffer.
 pub(crate) fn wide(text: &str) -> Vec<u16> {

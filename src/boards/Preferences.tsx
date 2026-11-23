@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { api } from '../lib/api';
 import { usePreferences } from '../lib/theme';
 import { useAction } from '../lib/useAction';
 import { useAsync } from '../lib/useAsync';
 import type { Preferences as Prefs, ThemePreference } from '../lib/types';
-import { Loading, Note, Row, Section, Switch } from '../components/ui';
+import { Button, Loading, Note, Row, Section, Slider, Switch } from '../components/ui';
 
 const THEMES: { id: ThemePreference; label: string }[] = [
   { id: 'system', label: 'Match Windows' },
@@ -15,12 +16,31 @@ export default function Preferences() {
   const { preferences, update } = usePreferences();
   const launch = useAsync(api.getLaunchAtStartup);
   const { busy, run } = useAction();
+  const saved = Math.round((preferences?.uiScale ?? 1) * 100);
+  const [size, setSize] = useState(saved);
+  const [shown, setShown] = useState(saved);
+  if (shown !== saved) {
+    setShown(saved);
+    setSize(saved);
+  }
 
   if (!preferences) return <Loading rows={4} />;
   const set = (patch: Partial<Prefs>) => run('prefs', () => update({ ...preferences, ...patch }));
 
   return (
     <>
+      <Section title="App size">
+        <div className="list">
+          <Row title="Size of the rod and boards" description={`${size}% · Drag to make the whole app smaller or bigger.`}>
+            <div className="range-control">
+              <Slider label="App size" value={size} min={60} max={160} step={5} onChange={setSize} onCommit={(v) => set({ uiScale: v / 100 })} />
+              <Button size="sm" variant="subtle" disabled={saved === 100} onClick={() => set({ uiScale: 1 })}>
+                Reset
+              </Button>
+            </div>
+          </Row>
+        </div>
+      </Section>
       <Section title="Appearance">
         <div className="tabs" role="radiogroup" aria-label="App theme">
           {THEMES.map((t) => (

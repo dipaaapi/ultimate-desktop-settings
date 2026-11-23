@@ -1,7 +1,7 @@
 {
   "name": "ultimate-windows-desktop-settings",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Ultimate Windows Desktop Settings: a Windows settings panel on a silver rod.",
   "type": "module",
   "scripts": {

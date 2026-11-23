@@ -19,6 +19,9 @@ fn open_read(hive: Hive, path: &str) -> Option<Key> {
 }
 
 fn to_error(err: windows::core::Error, what: &str) -> Error {
+    if err.code() == windows::Win32::Foundation::E_ACCESSDENIED {
+        return Error::AccessDenied;
+    }
     Error::msg(format!("Could not change {what}: {}", err.message()))
 }
 
@@ -56,6 +59,14 @@ impl Registry for WindowsRegistry {
         let what = format!(r"{}\{path}\{name}", hive.short_name());
         let key = root(hive).options().read().write().open(path).map_err(|e| to_error(e, &what))?;
         key.remove_value(name).map_err(|e| to_error(e, &what))
+    }
+
+    fn delete_key(&self, hive: Hive, path: &str) -> Result<()> {
+        if open_read(hive, path).is_none() {
+            return Ok(());
+        }
+        let what = format!(r"{}\{path}", hive.short_name());
+        root(hive).remove_tree(path).map_err(|e| to_error(e, &what))
     }
 
     fn value_names(&self, hive: Hive, path: &str) -> Vec<String> {
@@ -106,16 +117,17 @@ mod tests {
     fn startup_and_tweaks_against_real_registry() {
         use crate::{startup, tweaks};
         let reg = WindowsRegistry;
+        let folders = startup::StartupFolders::default();
         let item = startup::add(&reg, "UWDS Test Entry", r"C:\Windows\notepad.exe").unwrap();
-        startup::set_enabled(&reg, &item.id, false).unwrap();
-        let listed = startup::list(&reg, None).into_iter().find(|i| i.id == item.id).unwrap();
+        startup::set_enabled(&reg, &folders, &item.id, false).unwrap();
+        let listed = startup::list(&reg, &folders, &[]).into_iter().find(|i| i.id == item.id).unwrap();
         assert!(!listed.enabled);
-        startup::remove(&reg, &item.id, None).unwrap();
-        assert!(startup::list(&reg, None).iter().all(|i| i.id != item.id));
+        startup::remove(&reg, &folders, &item.id).unwrap();
+        assert!(startup::list(&reg, &folders, &[]).iter().all(|i| i.id != item.id));
 
         let before = tweaks::list(&reg).into_iter().find(|t| t.id == "compact-view").unwrap().enabled;
-        tweaks::set(&reg, "compact-view", !before).unwrap();
+        tweaks::set(&reg, "compact-view", usize::from(!before)).unwrap();
         assert_eq!(tweaks::list(&reg).into_iter().find(|t| t.id == "compact-view").unwrap().enabled, !before);
-        tweaks::set(&reg, "compact-view", before).unwrap();
+        tweaks::set(&reg, "compact-view", usize::from(before)).unwrap();
     }
 }

@@ -28,7 +28,7 @@ FROM ${NGINX_IMAGE} AS preview
 LABEL org.opencontainers.image.title="Ultimate Windows Desktop Settings (preview)" \
       org.opencontainers.image.description="Browser preview of the silver rod and beads with sample data. Open http://localhost:8080" \
       org.opencontainers.image.authors="EdMaster28 <dipaaapi8@gmail.com>" \
-      org.opencontainers.image.version="2.0.0"
+      org.opencontainers.image.version="2.1.0"
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=web /app/dist /usr/share/nginx/html
 EXPOSE 8080

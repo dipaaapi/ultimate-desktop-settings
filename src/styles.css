@@ -1014,6 +1014,23 @@ button {
   color: var(--text-2);
   cursor: pointer;
 }
+.tabs-sm {
+  margin-bottom: 0;
+  padding: 3px;
+  gap: 2px;
+  max-width: 100%;
+}
+.tabs-sm .tab {
+  padding: 5px 10px;
+  font-size: 12.5px;
+}
+.tab:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.tab:focus-visible {
+  box-shadow: var(--focus);
+}
 .tab[aria-selected='true'] {
   background: var(--surface-2);
   color: var(--text);
@@ -1314,4 +1331,70 @@ html.desktop,
   .notes-items {
     max-height: 200px;
   }
+}
+
+/* Settings boards */
+
+.settings-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 180px;
+  margin-bottom: 14px;
+}
+.settings-search svg {
+  position: absolute;
+  left: 10px;
+  color: var(--text-2);
+  pointer-events: none;
+}
+.settings-search .input {
+  width: 100%;
+  padding-left: 36px;
+}
+.startup-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.startup-toolbar .settings-search {
+  margin-bottom: 0;
+}
+.range-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(300px, 70vw);
+}
+.range-value {
+  flex: none;
+  min-width: 56px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.row-control .select {
+  max-width: 220px;
+}
+.radio {
+  all: unset;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.radio.on {
+  border: 6px solid var(--accent);
+}
+.radio:focus-visible {
+  box-shadow: var(--focus);
+}
+.radio:disabled {
+  cursor: default;
 }
