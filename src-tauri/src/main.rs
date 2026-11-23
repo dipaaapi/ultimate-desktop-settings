@@ -11,7 +11,31 @@ use tauri::{Manager, WindowEvent};
 
 use state::AppState;
 
+/// Marks a run of this program as the short-lived admin helper that makes
+/// one startup change after the UAC prompt, then exits.
+pub const ELEVATED_FLAG: &str = "--uds-elevated";
+
+/// `--uds-elevated startup <enable|disable|remove> <hex id>`. Returns the exit code.
+fn run_elevated(args: &[String]) -> i32 {
+    use uds_core::startup::{Change, decode_arg};
+    let [kind, change, id] = args else { return 2 };
+    let (Some(change), Some(id)) = (Change::from_arg(change), decode_arg(id)) else { return 2 };
+    if kind != "startup" {
+        return 2;
+    }
+    let reg = uds_core::system::registry();
+    match uds_core::system::apply_startup_change(reg.as_ref(), &id, change) {
+        Ok(()) => 0,
+        Err(_) => 1,
+    }
+}
+
 fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    if args.get(1).map(String::as_str) == Some(ELEVATED_FLAG) {
+        // Runs before Tauri starts, so no window, tray or single-instance check.
+        std::process::exit(run_elevated(&args[2..]));
+    }
     let start_minimized = std::env::args().any(|a| a == "--minimized");
 
     tauri::Builder::default()
@@ -21,10 +45,12 @@ fn main() {
         .setup(move |app| {
             let state = AppState::load();
             state.apply_startup_preferences(app.handle());
+            let ui_scale = state.preferences().ui_scale;
             app.manage(state);
-            app.manage(window::WindowState::default());
-            // Fit the rod to this screen before it first shows.
+            app.manage(window::WindowState::new(ui_scale));
+            // Fit the rod to this screen, at the user's app size, before it first shows.
             if let Some(main) = app.get_webview_window("main") {
+                let _ = main.set_zoom(ui_scale);
                 let _ = window::apply(&main, &app.state::<window::WindowState>(), uds_core::window_layout::Mode::Rod);
             }
             tray::create(app.handle())?;

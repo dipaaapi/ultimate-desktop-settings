@@ -11,12 +11,14 @@ use uds_core::apps::{self, InstalledApp};
 use uds_core::bluetooth::{self, BluetoothState};
 use uds_core::browsers::{self, Browser};
 use uds_core::config::Preferences;
+use uds_core::config::clamp_ui_scale;
+use uds_core::live;
 use uds_core::notes::NoteMeta;
 use uds_core::shortcuts::{self, ShortcutInfo};
-use uds_core::startup::{self, StartupItem};
-use uds_core::system::{self, AudioState, DisplayInfo, RecycleBinSummary};
+use uds_core::startup::{self, Change, StartupItem};
+use uds_core::system::{self, AudioState, BatteryStatus, DisplayInfo, PowerPlan, RecycleBinSummary};
 use uds_core::temp::{self, CleanResult, TempSummary};
-use uds_core::tweaks::{self, TweakState};
+use uds_core::tweaks::{self, Page, TweakState};
 use uds_core::window_layout::{Mode, Placement};
 use uds_core::{Error, Result};
 
@@ -51,8 +53,13 @@ pub fn handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'static 
         set_app_volume,
         set_app_mute,
         list_displays,
-        list_tweaks,
-        set_tweak,
+        list_settings,
+        set_setting,
+        restart_explorer,
+        power_info,
+        set_power_plan,
+        get_wallpaper,
+        set_wallpaper,
         bluetooth_state,
         control_bluetooth,
         list_browsers,
@@ -109,12 +116,23 @@ async fn get_preferences(state: Cmd<'_>) -> Result<Preferences> {
 }
 
 #[tauri::command]
-async fn set_preferences(app: AppHandle, state: Cmd<'_>, preferences: Preferences) -> Result<Preferences> {
+async fn set_preferences(
+    app: AppHandle,
+    state: Cmd<'_>,
+    window_state: State<'_, WindowState>,
+    preferences: Preferences,
+) -> Result<Preferences> {
     let mut prefs = preferences;
     prefs.night_light_strength = prefs.night_light_strength.min(100);
     prefs.world_clocks.truncate(12);
+    prefs.ui_scale = clamp_ui_scale(prefs.ui_scale);
 
     let previous = state.preferences();
+    if (prefs.ui_scale - previous.ui_scale).abs() > f64::EPSILON {
+        if let Some(main) = app.get_webview_window("main") {
+            window::set_ui_scale(&main, &window_state, prefs.ui_scale).map_err(tauri_err)?;
+        }
+    }
     if prefs.always_on_top != previous.always_on_top {
         if let Some(window) = app.get_webview_window("main") {
             window.set_always_on_top(prefs.always_on_top).map_err(|e| Error::msg(e.to_string()))?;
@@ -164,7 +182,7 @@ pub struct Overview {
 
 #[tauri::command]
 async fn overview(state: Cmd<'_>) -> Result<Overview> {
-    let items = startup::list(state.reg.as_ref(), system::startup_folder().as_deref());
+    let items = startup::list(state.reg.as_ref(), &system::startup_folders(), &[]);
     Ok(Overview {
         startup_total: items.len(),
         startup_enabled: items.iter().filter(|i| i.enabled).count(),
@@ -199,12 +217,24 @@ async fn empty_recycle_bin() -> Result<RecycleBinSummary> {
 
 #[tauri::command]
 async fn list_startup(state: Cmd<'_>) -> Result<Vec<StartupItem>> {
-    Ok(startup::list(state.reg.as_ref(), system::startup_folder().as_deref()))
+    Ok(startup::list(state.reg.as_ref(), &system::startup_folders(), &system::scheduled_startup_tasks()))
+}
+
+/// Applies a startup change, asking for admin rights through the UAC prompt
+/// only when Windows refuses it without them.
+fn change_startup(state: &AppState, id: &str, change: Change) -> Result<()> {
+    match system::apply_startup_change(state.reg.as_ref(), id, change) {
+        Err(e) if e.is_access_denied() => {
+            let args = format!("{} startup {} {}", crate::ELEVATED_FLAG, change.as_arg(), startup::encode_arg(id));
+            system::run_self_elevated(&args)
+        }
+        other => other,
+    }
 }
 
 #[tauri::command]
 async fn set_startup_enabled(state: Cmd<'_>, id: String, enabled: bool) -> Result<Vec<StartupItem>> {
-    startup::set_enabled(state.reg.as_ref(), &id, enabled)?;
+    change_startup(&state, &id, if enabled { Change::Enable } else { Change::Disable })?;
     list_startup(state).await
 }
 
@@ -216,7 +246,7 @@ async fn add_startup(state: Cmd<'_>, name: String, command: String) -> Result<Ve
 
 #[tauri::command]
 async fn remove_startup(state: Cmd<'_>, id: String) -> Result<Vec<StartupItem>> {
-    startup::remove(state.reg.as_ref(), &id, system::startup_folder().as_deref())?;
+    change_startup(&state, &id, Change::Remove)?;
     list_startup(state).await
 }
 
@@ -258,16 +288,74 @@ async fn list_displays() -> Result<Vec<DisplayInfo>> {
     system::displays()
 }
 
-#[tauri::command]
-async fn list_tweaks(state: Cmd<'_>) -> Result<Vec<TweakState>> {
-    Ok(tweaks::list(state.reg.as_ref()))
+/// Every setting on one board: registry values and live system settings.
+fn settings_for(state: &AppState, page: Page) -> Vec<TweakState> {
+    let mut list: Vec<TweakState> = tweaks::list(state.reg.as_ref()).into_iter().filter(|t| t.page == page).collect();
+    list.extend(live::CATALOG.iter().filter(|d| d.page == page).map(|d| live::state(d, system::live_get(d.id))));
+    list
 }
 
 #[tauri::command]
-async fn set_tweak(state: Cmd<'_>, id: String, enabled: bool) -> Result<Vec<TweakState>> {
-    let refresh = tweaks::set(state.reg.as_ref(), &id, enabled)?;
-    system::notify_changed(refresh);
-    Ok(tweaks::list(state.reg.as_ref()))
+async fn list_settings(state: Cmd<'_>, page: Page) -> Result<Vec<TweakState>> {
+    Ok(settings_for(&state, page))
+}
+
+/// `value` is the option index for switches and choices, or the number for sliders.
+#[tauri::command]
+async fn set_setting(state: Cmd<'_>, id: String, value: i32) -> Result<Vec<TweakState>> {
+    let page = if let Some(def) = live::find(&id) {
+        let value = live::value_for(def, value)?;
+        system::live_set(state.reg.as_ref(), def.id, value)?;
+        def.page
+    } else {
+        let def = tweaks::find(&id)?;
+        let index = usize::try_from(value).map_err(|_| Error::Invalid(value.to_string()))?;
+        let refresh = tweaks::set(state.reg.as_ref(), &id, index)?;
+        system::notify_changed(refresh);
+        def.page
+    };
+    Ok(settings_for(&state, page))
+}
+
+#[tauri::command]
+async fn restart_explorer() -> Result<()> {
+    system::restart_explorer()
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PowerInfo {
+    plans: Vec<PowerPlan>,
+    battery: BatteryStatus,
+}
+
+#[tauri::command]
+async fn power_info() -> Result<PowerInfo> {
+    Ok(PowerInfo { plans: system::power_plans()?, battery: system::battery() })
+}
+
+#[tauri::command]
+async fn set_power_plan(id: String) -> Result<PowerInfo> {
+    system::set_power_plan(&id)?;
+    power_info().await
+}
+
+#[tauri::command]
+async fn get_wallpaper() -> Result<Option<String>> {
+    Ok(system::wallpaper())
+}
+
+const PICTURE_TYPES: [&str; 7] = ["jpg", "jpeg", "png", "bmp", "gif", "jfif", "webp"];
+
+#[tauri::command]
+async fn set_wallpaper(path: String) -> Result<Option<String>> {
+    let path = PathBuf::from(path);
+    let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+    if !PICTURE_TYPES.contains(&ext.as_str()) {
+        return Err(Error::Invalid("Pick a picture file (JPG, PNG, BMP, GIF or WebP).".into()));
+    }
+    system::set_wallpaper(&path)?;
+    Ok(system::wallpaper())
 }
 
 #[tauri::command]

@@ -53,6 +53,8 @@ pub trait Registry: Send + Sync {
     fn get(&self, hive: Hive, path: &str, name: &str) -> Option<RegValue>;
     fn set(&self, hive: Hive, path: &str, name: &str, value: RegValue) -> Result<()>;
     fn delete_value(&self, hive: Hive, path: &str, name: &str) -> Result<()>;
+    /// Deletes a key with all its values and subkeys. Missing keys are fine.
+    fn delete_key(&self, hive: Hive, path: &str) -> Result<()>;
     /// Value names (excluding the default value) of a key; empty if missing.
     fn value_names(&self, hive: Hive, path: &str) -> Vec<String>;
     /// Direct subkey names of a key; empty if missing.
@@ -124,6 +126,17 @@ impl Registry for MemoryRegistry {
             Some(_) => Ok(()),
             None => Err(Error::NotFound(format!("{}\\{path}\\{name}", hive.short_name()))),
         }
+    }
+
+    fn delete_key(&self, hive: Hive, path: &str) -> Result<()> {
+        let target = norm(path);
+        let prefix = format!("{target}\\");
+        let mut keys = self.keys.lock().unwrap();
+        let mut casing = self.casing.lock().unwrap();
+        let doomed = |(h, p): &(Hive, String)| *h == hive && (*p == target || p.starts_with(&prefix));
+        keys.retain(|k, _| !doomed(k));
+        casing.retain(|k, _| !doomed(k));
+        Ok(())
     }
 
     fn value_names(&self, hive: Hive, path: &str) -> Vec<String> {

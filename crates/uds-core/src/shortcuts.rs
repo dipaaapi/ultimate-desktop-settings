@@ -33,54 +33,483 @@ pub struct ShortcutInfo {
     pub group: String,
 }
 
-const SETTINGS: &str = "Windows Settings";
 const TOOLS: &str = "System Tools";
 const FOLDERS: &str = "Folders & Apps";
 
-macro_rules! settings {
-    ($id:literal, $title:literal, $desc:literal, $uri:literal) => {
-        Shortcut { id: $id, title: $title, description: $desc, group: SETTINGS, target: Target::Uri($uri) }
+macro_rules! page {
+    ($group:literal, $id:literal, $title:literal, $desc:literal, $uri:literal) => {
+        Shortcut { id: $id, title: $title, description: $desc, group: $group, target: Target::Uri($uri) }
     };
 }
 
 pub const CATALOG: &[Shortcut] = &[
-    settings!("display", "Display", "Resolution, scale, brightness and multiple monitors.", "ms-settings:display"),
-    settings!("night-light", "Night light", "Windows' own night light schedule.", "ms-settings:nightlight"),
-    settings!("sound", "Sound", "Output and input devices and system sounds.", "ms-settings:sound"),
-    settings!(
+    page!(
+        "System",
+        "display",
+        "Display",
+        "Resolution, scale, brightness and multiple monitors.",
+        "ms-settings:display"
+    ),
+    page!("System", "night-light", "Night light", "Windows' own night light schedule.", "ms-settings:nightlight"),
+    page!("System", "hdr", "HDR", "High dynamic range for supported screens.", "ms-settings:display-hdr"),
+    page!(
+        "System",
+        "graphics",
+        "Graphics",
+        "GPU preference per app and graphics features.",
+        "ms-settings:display-advancedgraphics"
+    ),
+    page!("System", "sound", "Sound", "Output and input devices and system sounds.", "ms-settings:sound"),
+    page!(
+        "System",
         "app-volume",
         "App volume and device preferences",
         "Pick an output device per app.",
         "ms-settings:apps-volume"
     ),
-    settings!("bluetooth", "Bluetooth & devices", "Pair and manage Bluetooth devices.", "ms-settings:bluetooth"),
-    settings!("network", "Network & internet", "Wi-Fi, Ethernet, VPN and DNS.", "ms-settings:network"),
-    settings!(
-        "personalization",
-        "Personalization",
-        "Background, colors, themes and lock screen.",
-        "ms-settings:personalization"
-    ),
-    settings!("taskbar", "Taskbar", "Taskbar items, behaviors and alignment.", "ms-settings:taskbar"),
-    settings!(
+    page!(
+        "System",
         "notifications",
         "Notifications",
         "Notification and Do Not Disturb settings.",
         "ms-settings:notifications"
     ),
-    settings!("apps", "Installed apps", "Modify or uninstall programs.", "ms-settings:appsfeatures"),
-    settings!("default-apps", "Default apps", "Choose the default browser and other apps.", "ms-settings:defaultapps"),
-    settings!("startup-apps", "Startup apps", "Windows' own startup apps page.", "ms-settings:startupapps"),
-    settings!("date-time", "Date & time", "Time zone, clock sync and formats.", "ms-settings:dateandtime"),
-    settings!("windows-update", "Windows Update", "Updates, update history and restarts.", "ms-settings:windowsupdate"),
-    settings!(
+    page!("System", "focus", "Focus", "Focus sessions and distraction blocking.", "ms-settings:focus"),
+    page!(
+        "System",
+        "power",
+        "Power & battery",
+        "Power mode, battery saver and battery usage.",
+        "ms-settings:powersleep"
+    ),
+    page!(
+        "System",
+        "battery-usage",
+        "Battery usage",
+        "Which apps used the battery.",
+        "ms-settings:batterysaver-usagedetails"
+    ),
+    page!("System", "storage", "Storage", "Disk space, Storage Sense and cleanup.", "ms-settings:storagesense"),
+    page!(
+        "System",
+        "storage-locations",
+        "Where new content is saved",
+        "Default drives for apps, documents and media.",
+        "ms-settings:savelocations"
+    ),
+    page!("System", "nearby-sharing", "Nearby sharing", "Share files with nearby PCs.", "ms-settings:crossdevice"),
+    page!("System", "multitasking", "Multitasking", "Snap, Alt+Tab and virtual desktops.", "ms-settings:multitasking"),
+    page!(
+        "System",
+        "for-developers",
+        "For developers",
+        "Developer Mode, sudo and terminal options.",
+        "ms-settings:developers"
+    ),
+    page!("System", "activation", "Activation", "Windows edition and product key.", "ms-settings:activation"),
+    page!(
+        "System",
+        "troubleshoot",
+        "Troubleshoot",
+        "Windows troubleshooters, including audio.",
+        "ms-settings:troubleshoot"
+    ),
+    page!("System", "recovery", "Recovery", "Reset this PC, go back and advanced startup.", "ms-settings:recovery"),
+    page!(
+        "System",
+        "projecting",
+        "Projecting to this PC",
+        "Let phones and PCs cast to this screen.",
+        "ms-settings:project"
+    ),
+    page!(
+        "System",
+        "remote-desktop",
+        "Remote Desktop",
+        "Allow remote connections to this PC.",
+        "ms-settings:remotedesktop"
+    ),
+    page!("System", "clipboard", "Clipboard", "Clipboard history and sync across devices.", "ms-settings:clipboard"),
+    page!("System", "about", "About this PC", "Processor, memory, Windows version and PC name.", "ms-settings:about"),
+    page!(
+        "Bluetooth & devices",
+        "bluetooth",
+        "Bluetooth & devices",
+        "Pair and manage Bluetooth devices.",
+        "ms-settings:bluetooth"
+    ),
+    page!(
+        "Bluetooth & devices",
+        "printers",
+        "Printers & scanners",
+        "Add printers and set the default one.",
+        "ms-settings:printers"
+    ),
+    page!(
+        "Bluetooth & devices",
+        "phone-link",
+        "Mobile devices",
+        "Phone Link and using your phone from this PC.",
+        "ms-settings:mobile-devices"
+    ),
+    page!("Bluetooth & devices", "cameras", "Cameras", "Webcam settings and default camera.", "ms-settings:camera"),
+    page!(
+        "Bluetooth & devices",
+        "mouse",
+        "Mouse",
+        "Buttons, scrolling and pointer options.",
+        "ms-settings:mousetouchpad"
+    ),
+    page!(
+        "Bluetooth & devices",
+        "touchpad",
+        "Touchpad",
+        "Gestures, taps and scrolling.",
+        "ms-settings:devices-touchpad"
+    ),
+    page!("Bluetooth & devices", "pen", "Pen & Windows Ink", "Pen buttons and handwriting.", "ms-settings:pen"),
+    page!(
+        "Bluetooth & devices",
+        "autoplay",
+        "AutoPlay",
+        "What happens when you plug in drives and phones.",
+        "ms-settings:autoplay"
+    ),
+    page!("Bluetooth & devices", "usb", "USB", "USB notifications and battery saver for USB.", "ms-settings:usb"),
+    page!(
+        "Network & internet",
+        "network",
+        "Network & internet",
+        "Status and network properties.",
+        "ms-settings:network"
+    ),
+    page!(
+        "Network & internet",
+        "wifi",
+        "Wi-Fi",
+        "Networks, known networks and hardware properties.",
+        "ms-settings:network-wifi"
+    ),
+    page!(
+        "Network & internet",
+        "ethernet",
+        "Ethernet",
+        "Wired connection, IP and DNS.",
+        "ms-settings:network-ethernet"
+    ),
+    page!("Network & internet", "vpn", "VPN", "Add and connect to VPNs.", "ms-settings:network-vpn"),
+    page!(
+        "Network & internet",
+        "hotspot",
+        "Mobile hotspot",
+        "Share this PC's internet.",
+        "ms-settings:network-mobilehotspot"
+    ),
+    page!(
+        "Network & internet",
+        "airplane",
+        "Airplane mode",
+        "Turn all wireless off.",
+        "ms-settings:network-airplanemode"
+    ),
+    page!("Network & internet", "proxy", "Proxy", "Proxy server settings.", "ms-settings:network-proxy"),
+    page!(
+        "Network & internet",
+        "data-usage",
+        "Data usage",
+        "Data used per app and data limits.",
+        "ms-settings:datausage"
+    ),
+    page!(
+        "Network & internet",
+        "advanced-network",
+        "Advanced network settings",
+        "Adapters, network reset and sharing.",
+        "ms-settings:network-advancedsettings"
+    ),
+    page!(
+        "Personalization",
+        "personalization",
+        "Personalization",
+        "Background, colors, themes and lock screen.",
+        "ms-settings:personalization"
+    ),
+    page!(
+        "Personalization",
+        "background",
+        "Background",
+        "Desktop picture, slideshow or solid color.",
+        "ms-settings:personalization-background"
+    ),
+    page!("Personalization", "colors", "Colors", "Light or dark mode and accent color.", "ms-settings:colors"),
+    page!("Personalization", "themes", "Themes", "Themes, desktop icons and mouse pointers.", "ms-settings:themes"),
+    page!("Personalization", "lock-screen", "Lock screen", "Lock screen picture and status.", "ms-settings:lockscreen"),
+    page!(
+        "Personalization",
+        "text-input",
+        "Text input",
+        "Touch keyboard and emoji panel themes.",
+        "ms-settings:personalization-textinput"
+    ),
+    page!(
+        "Personalization",
+        "start",
+        "Start",
+        "Start layout, recommendations and folders.",
+        "ms-settings:personalization-start"
+    ),
+    page!("Personalization", "taskbar", "Taskbar", "Taskbar items, behaviors and alignment.", "ms-settings:taskbar"),
+    page!("Personalization", "fonts", "Fonts", "Installed fonts and adding new ones.", "ms-settings:fonts"),
+    page!(
+        "Personalization",
+        "device-usage",
+        "Device usage",
+        "Tell Windows what you use this PC for.",
+        "ms-settings:deviceusage"
+    ),
+    page!("Apps", "apps", "Installed apps", "Modify or uninstall programs.", "ms-settings:appsfeatures"),
+    page!(
+        "Apps",
+        "advanced-apps",
+        "Advanced app settings",
+        "Where to get apps, app archiving and sharing.",
+        "ms-settings:advanced-apps"
+    ),
+    page!(
+        "Apps",
+        "default-apps",
+        "Default apps",
+        "Choose the default browser and other apps.",
+        "ms-settings:defaultapps"
+    ),
+    page!("Apps", "offline-maps", "Offline maps", "Download maps for offline use.", "ms-settings:maps"),
+    page!(
+        "Apps",
+        "optional-features",
+        "Optional features",
+        "Add or remove Windows features.",
+        "ms-settings:optionalfeatures"
+    ),
+    page!("Apps", "websites-apps", "Apps for websites", "Links that open in apps.", "ms-settings:appsforwebsites"),
+    page!(
+        "Apps",
+        "video-playback",
+        "Video playback",
+        "HDR video and battery options for video.",
+        "ms-settings:videoplayback"
+    ),
+    page!("Apps", "startup-apps", "Startup apps", "Windows' own startup apps page.", "ms-settings:startupapps"),
+    page!("Accounts", "your-info", "Your info", "Your account and picture.", "ms-settings:yourinfo"),
+    page!(
+        "Accounts",
+        "sign-in",
+        "Sign-in options",
+        "PIN, Windows Hello, password and dynamic lock.",
+        "ms-settings:signinoptions"
+    ),
+    page!(
+        "Accounts",
+        "email-accounts",
+        "Email & accounts",
+        "Accounts used by Mail, Calendar and other apps.",
+        "ms-settings:emailandaccounts"
+    ),
+    page!("Accounts", "family", "Family & other users", "Add people and set up a kiosk.", "ms-settings:otherusers"),
+    page!("Accounts", "backup", "Windows Backup", "Back up folders, apps and settings.", "ms-settings:backup"),
+    page!(
+        "Accounts",
+        "work-access",
+        "Access work or school",
+        "Connect to a work or school account.",
+        "ms-settings:workplace"
+    ),
+    page!(
+        "Time & language",
+        "date-time",
+        "Date & time",
+        "Time zone, clock sync and formats.",
+        "ms-settings:dateandtime"
+    ),
+    page!(
+        "Time & language",
+        "language",
+        "Language & region",
+        "Display language, keyboards and regional format.",
+        "ms-settings:regionlanguage"
+    ),
+    page!("Time & language", "typing", "Typing", "Autocorrect, suggestions and touch keyboard.", "ms-settings:typing"),
+    page!("Time & language", "speech", "Speech", "Voice typing language and voices.", "ms-settings:speech"),
+    page!(
+        "Gaming",
+        "game-bar",
+        "Game Bar",
+        "Xbox Game Bar shortcuts and controller button.",
+        "ms-settings:gaming-gamebar"
+    ),
+    page!(
+        "Gaming",
+        "captures",
+        "Captures",
+        "Where and how clips and screenshots are saved.",
+        "ms-settings:gaming-gamedvr"
+    ),
+    page!("Gaming", "game-mode", "Game Mode", "Prioritize games while you play.", "ms-settings:gaming-gamemode"),
+    page!(
+        "Accessibility",
+        "text-size",
+        "Text size",
+        "Make text bigger everywhere.",
+        "ms-settings:easeofaccess-display"
+    ),
+    page!(
+        "Accessibility",
+        "visual-effects",
+        "Visual effects",
+        "Scrollbars, transparency and animations.",
+        "ms-settings:easeofaccess-visualeffects"
+    ),
+    page!(
+        "Accessibility",
+        "pointer",
+        "Mouse pointer and touch",
+        "Pointer size, color and touch indicator.",
+        "ms-settings:easeofaccess-mousepointer"
+    ),
+    page!(
+        "Accessibility",
+        "text-cursor",
+        "Text cursor",
+        "Cursor indicator and thickness.",
+        "ms-settings:easeofaccess-cursor"
+    ),
+    page!(
+        "Accessibility",
+        "magnifier",
+        "Magnifier",
+        "Zoom in on parts of the screen.",
+        "ms-settings:easeofaccess-magnifier"
+    ),
+    page!(
+        "Accessibility",
+        "color-filters",
+        "Color filters",
+        "Color-blind friendly filters.",
+        "ms-settings:easeofaccess-colorfilter"
+    ),
+    page!(
+        "Accessibility",
+        "contrast-themes",
+        "Contrast themes",
+        "High contrast colors.",
+        "ms-settings:easeofaccess-highcontrast"
+    ),
+    page!("Accessibility", "narrator", "Narrator", "Screen reader.", "ms-settings:easeofaccess-narrator"),
+    page!(
+        "Accessibility",
+        "audio-a11y",
+        "Audio",
+        "Mono audio and flashing for alerts.",
+        "ms-settings:easeofaccess-audio"
+    ),
+    page!(
+        "Accessibility",
+        "captions",
+        "Captions",
+        "Live captions and caption style.",
+        "ms-settings:easeofaccess-closedcaptioning"
+    ),
+    page!(
+        "Accessibility",
+        "keyboard-a11y",
+        "Keyboard",
+        "Sticky, Filter and Toggle keys, on-screen keyboard.",
+        "ms-settings:easeofaccess-keyboard"
+    ),
+    page!(
+        "Accessibility",
+        "eye-control",
+        "Eye control",
+        "Control the PC with your eyes.",
+        "ms-settings:easeofaccess-eyecontrol"
+    ),
+    page!(
+        "Privacy & security",
         "privacy",
         "Privacy & security",
         "App permissions, Windows Security and firewall.",
         "ms-settings:privacy"
     ),
-    settings!("about", "About this PC", "Processor, memory and Windows version.", "ms-settings:about"),
-    settings!("troubleshoot", "Troubleshoot", "Windows troubleshooters, including audio.", "ms-settings:troubleshoot"),
+    page!(
+        "Privacy & security",
+        "windows-security",
+        "Windows Security",
+        "Virus protection, firewall and device security.",
+        "ms-settings:windowsdefender"
+    ),
+    page!(
+        "Privacy & security",
+        "find-my-device",
+        "Find my device",
+        "Locate this PC if it's lost.",
+        "ms-settings:findmydevice"
+    ),
+    page!(
+        "Privacy & security",
+        "device-encryption",
+        "Device encryption",
+        "Encrypt this PC's drive.",
+        "ms-settings:deviceencryption"
+    ),
+    page!(
+        "Privacy & security",
+        "diagnostics",
+        "Diagnostics & feedback",
+        "Diagnostic data and feedback frequency.",
+        "ms-settings:privacy-feedback"
+    ),
+    page!(
+        "Privacy & security",
+        "activity-history",
+        "Activity history",
+        "What Windows remembers about your activity.",
+        "ms-settings:privacy-activityhistory"
+    ),
+    page!(
+        "Privacy & security",
+        "search-permissions",
+        "Search permissions",
+        "SafeSearch, cloud search and history.",
+        "ms-settings:search-permissions"
+    ),
+    page!(
+        "Privacy & security",
+        "searching-windows",
+        "Searching Windows",
+        "Indexing locations and excluded folders.",
+        "ms-settings:cortana-windowssearch"
+    ),
+    page!(
+        "Windows Update",
+        "windows-update",
+        "Windows Update",
+        "Updates, update history and restarts.",
+        "ms-settings:windowsupdate"
+    ),
+    page!(
+        "Windows Update",
+        "update-history",
+        "Update history",
+        "Installed updates and uninstalling them.",
+        "ms-settings:windowsupdate-history"
+    ),
+    page!(
+        "Windows Update",
+        "update-options",
+        "Advanced update options",
+        "Active hours, optional updates and delivery.",
+        "ms-settings:windowsupdate-options"
+    ),
+    page!("Windows Update", "insider", "Windows Insider Program", "Preview builds.", "ms-settings:windowsinsider"),
     Shortcut {
         id: "control-panel",
         title: "Control Panel",
@@ -239,6 +668,7 @@ mod tests {
             }
         }
         assert!(find("display").is_ok());
+        assert!(CATALOG.len() > 100, "every Settings page is one click away");
         assert!(find("rm -rf").is_err());
     }
 }

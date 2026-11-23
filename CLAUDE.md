@@ -6,6 +6,8 @@ Windows settings utility. Tauri 2 + Rust (2024) + React 19 + TypeScript 6. The r
 - `crates/uds-core`: all Windows logic. Platform-neutral code is tested against `MemoryRegistry` and temp dirs; real Windows calls live in `src/win/` and are reached through `system.rs`, which returns `Error::Unsupported` off Windows.
 - `src-tauri`: Tauri shell. `commands.rs` holds every command the UI can call (async, so the window never blocks).
 - `src`: the interface. `lib/api.ts` is the only bridge; outside Tauri it answers from `lib/mock.ts`. Keep the two in sync when adding a command.
+- Windows settings are catalog entries: per-user registry values in `uds-core/src/tweaks.rs`, system-call settings in `uds-core/src/live.rs`. Boards render them with `components/SettingsList.tsx`; keep `src/lib/mockSettings.ts` in step with the catalogs.
+- Startup sources live in `uds-core/src/startup.rs`. Changes Windows refuses without admin rights rerun the app elevated (`--uds-elevated`, see `src-tauri/src/main.rs`) through the UAC prompt.
 - Beads are defined in `src/beads.ts`; category colors match the logo (`#5EEAD4`, `#60A5FA`, `#C084FC`, `#FCD34D`). The logo files are owned separately; don't redesign them.
 
 ## Checks before pushing

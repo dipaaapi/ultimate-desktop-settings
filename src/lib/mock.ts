@@ -9,11 +9,13 @@ import type {
   Fired,
   InstalledApp,
   NoteMeta,
+  PowerInfo,
   Preferences,
   ShortcutInfo,
   StartupItem,
   TweakState,
 } from './types';
+import { SAMPLE_SETTINGS } from './mockSettings';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -37,14 +39,35 @@ function createState() {
     nightLightEnabled: false,
     nightLightStrength: 40,
     worldClocks: ['Europe/London', 'America/New_York', 'Asia/Tokyo'],
+    uiScale: 1,
   };
+  const HKCU_RUN = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
+  const HKLM_RUN = 'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
+  const HKLM_RUN32 = 'HKLM\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Run';
+  const USER_FOLDER = 'C:\\Users\\Ed\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup';
+  const item = (
+    id: string,
+    name: string,
+    command: string,
+    source: StartupItem['source'],
+    location: string,
+    extra: Partial<StartupItem> = {},
+  ): StartupItem => ({ id, name, command, source, location, enabled: true, editable: true, removable: true, needsAdmin: false, ...extra });
   const startup: StartupItem[] = [
-    { id: 'user-run:Discord', name: 'Discord', command: 'C:\\Users\\Ed\\AppData\\Local\\Discord\\Update.exe --processStart Discord.exe', source: 'userRun', enabled: true, editable: true },
-    { id: 'user-run:Spotify', name: 'Spotify', command: '"C:\\Users\\Ed\\AppData\\Roaming\\Spotify\\Spotify.exe" /minimized', source: 'userRun', enabled: false, editable: true },
-    { id: 'user-run:OneDrive', name: 'OneDrive', command: '"C:\\Program Files\\Microsoft OneDrive\\OneDrive.exe" /background', source: 'userRun', enabled: true, editable: true },
-    { id: 'machine-run:SecurityHealth', name: 'SecurityHealth', command: '%windir%\\system32\\SecurityHealthSystray.exe', source: 'machineRun', enabled: true, editable: false },
-    { id: 'user-folder:Sticky Notes.lnk', name: 'Sticky Notes', command: 'C:\\Users\\Ed\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Sticky Notes.lnk', source: 'userFolder', enabled: true, editable: true },
-  ];
+    item('user-run:Discord', 'Discord', 'C:\\Users\\Ed\\AppData\\Local\\Discord\\Update.exe --processStart Discord.exe', 'userRun', HKCU_RUN),
+    item('user-run:Spotify', 'Spotify', '"C:\\Users\\Ed\\AppData\\Roaming\\Spotify\\Spotify.exe" /minimized', 'userRun', HKCU_RUN, { enabled: false }),
+    item('user-run:OneDrive', 'OneDrive', '"C:\\Program Files\\Microsoft OneDrive\\OneDrive.exe" /background', 'userRun', HKCU_RUN),
+    item('machine-run:SecurityHealth', 'SecurityHealth', '%windir%\\system32\\SecurityHealthSystray.exe', 'machineRun', HKLM_RUN, { needsAdmin: true }),
+    item('machine-run32:Steam', 'Steam', '"C:\\Program Files (x86)\\Steam\\steam.exe" -silent', 'machineRun32', HKLM_RUN32, { needsAdmin: true }),
+    item('machine-run32:FxSound', 'FxSound', '"C:\\Program Files\\FxSound LLC\\FxSound\\FxSound.exe"', 'machineRun32', HKLM_RUN32, { needsAdmin: true, enabled: false }),
+    item('user-folder:Sticky Notes.lnk', 'Sticky Notes', `${USER_FOLDER}\\Sticky Notes.lnk`, 'userFolder', USER_FOLDER),
+    item('common-folder:ShareMouse.lnk', 'ShareMouse', 'C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp\\ShareMouse.lnk', 'commonFolder', 'C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp', { needsAdmin: true }),
+    item('store-app:SpotifyAB.SpotifyMusic_zpdnekdrzrea0\\SpotifyStartupTask', 'Spotify Music', 'SpotifyAB.SpotifyMusic_zpdnekdrzrea0!SpotifyStartupTask', 'storeApp', 'Microsoft Store app', { enabled: false, removable: false }),
+    item('store-app:MSTeams_8wekyb3d8bbwe\\TeamsTfwStartupTask', 'MS Teams', 'MSTeams_8wekyb3d8bbwe!TeamsTfwStartupTask', 'storeApp', 'Microsoft Store app', { removable: false }),
+    item('task:\\Opera GX scheduled assistant Autoupdate', 'Opera GX scheduled assistant Autoupdate', '"C:\\Users\\Ed\\AppData\\Local\\Programs\\Opera GX\\launcher.exe" --scheduledautoupdate', 'scheduledTask', 'Task Scheduler \\Opera GX scheduled assistant Autoupdate', { removable: false }),
+    item('task:\\GoogleUpdaterTaskUser', 'GoogleUpdaterTaskUser', '"C:\\Users\\Ed\\AppData\\Local\\Google\\GoogleUpdater\\updater.exe" --wake', 'scheduledTask', 'Task Scheduler \\GoogleUpdaterTaskUser', { removable: false }),
+    item('user-run-once:Setup cleanup', 'Setup cleanup', 'C:\\Users\\Ed\\AppData\\Local\\Temp\\cleanup.exe /finish', 'userRunOnce', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce', { editable: false }),
+  ].sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
   const audio: AudioState = {
     master: 0.62,
     muted: false,
@@ -60,19 +83,19 @@ function createState() {
       { pid: 9012, name: 'Spotify', volume: 0.9, muted: true, isSystem: false },
     ],
   };
-  const tweaks: TweakState[] = [
-    { id: 'apps-dark', title: 'Dark mode for apps', description: 'Apps that follow the Windows theme use dark colors.', group: 'Theme', enabled: true },
-    { id: 'system-dark', title: 'Dark mode for Windows', description: 'Taskbar, Start menu and notifications use dark colors.', group: 'Theme', enabled: true },
-    { id: 'transparency', title: 'Transparency effects', description: 'Windows and surfaces appear slightly see-through.', group: 'Theme', enabled: true },
-    { id: 'file-extensions', title: 'Show file extensions', description: 'File Explorer shows endings like .exe, .pdf and .txt.', group: 'File Explorer', enabled: false },
-    { id: 'hidden-files', title: 'Show hidden files', description: 'File Explorer shows files and folders marked hidden.', group: 'File Explorer', enabled: false },
-    { id: 'open-this-pc', title: 'Open File Explorer to This PC', description: 'New Explorer windows start at This PC instead of Home.', group: 'File Explorer', enabled: false },
-    { id: 'compact-view', title: 'Compact view', description: 'Tighter spacing between files in File Explorer.', group: 'File Explorer', enabled: false },
-    { id: 'taskbar-left', title: 'Align taskbar to the left', description: 'Start and pinned apps sit on the left like Windows 10.', group: 'Taskbar', enabled: false },
-    { id: 'task-view-button', title: 'Task View button', description: 'Shows the Task View button on the taskbar.', group: 'Taskbar', enabled: true },
-    { id: 'clock-seconds', title: 'Show seconds in the clock', description: 'The taskbar clock shows seconds (Windows 11).', group: 'Taskbar', enabled: false },
-    { id: 'end-task', title: 'End task on right-click', description: 'Right-clicking a taskbar app offers End task (Windows 11).', group: 'Taskbar', enabled: false },
-  ];
+  const settings: TweakState[] = structuredClone(SAMPLE_SETTINGS);
+  // The preview pretends dark mode is on, like the screenshots.
+  for (const t of settings) {
+    if (t.id === 'apps-dark' || t.id === 'system-dark') Object.assign(t, { enabled: true, selected: 1 });
+  }
+  const power: PowerInfo = {
+    plans: [
+      { id: '381b4222-f694-41f0-9685-ff5bb260df2e', name: 'Balanced', active: true },
+      { id: '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c', name: 'High performance', active: false },
+      { id: 'a1841308-3541-4fab-bc81-f71556f20b4a', name: 'Power saver', active: false },
+    ],
+    battery: { hasBattery: true, percent: 76, pluggedIn: true, charging: true, saverOn: false },
+  };
   const browsers: Browser[] = [
     { id: 'Google Chrome', name: 'Google Chrome', exe: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', kind: 'chrome', isDefault: true, supportsPrivate: true },
     { id: 'Brave', name: 'Brave', exe: 'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe', kind: 'brave', isDefault: false, supportsPrivate: true },
@@ -109,7 +132,12 @@ function createState() {
     category: category as InstalledApp['category'],
   }));
   const shortcuts: ShortcutInfo[] = [
-    ['display', 'Display', 'Resolution, scale, brightness and multiple monitors.', 'Windows Settings'],
+    ['display', 'Display', 'Resolution, scale, brightness and multiple monitors.', 'System'],
+    ['power', 'Power & battery', 'Power mode, battery saver and battery usage.', 'System'],
+    ['wifi', 'Wi-Fi', 'Networks, known networks and hardware properties.', 'Network & internet'],
+    ['sign-in', 'Sign-in options', 'PIN, Windows Hello, password and dynamic lock.', 'Accounts'],
+    ['magnifier', 'Magnifier', 'Zoom in on parts of the screen.', 'Accessibility'],
+    ['printers', 'Printers & scanners', 'Add printers and set the default one.', 'Bluetooth & devices'],
     ['night-light', 'Night light', "Windows' own night light schedule.", 'Windows Settings'],
     ['sound', 'Sound', 'Output and input devices and system sounds.', 'Windows Settings'],
     ['app-volume', 'App volume and device preferences', 'Pick an output device per app.', 'Windows Settings'],
@@ -150,7 +178,9 @@ function createState() {
     launchAtStartup: false,
     startup,
     audio,
-    tweaks,
+    settings,
+    power,
+    wallpaper: 'C:\\Windows\\Web\\Wallpaper\\Windows\\img0.jpg' as string | null,
     browsers,
     notes,
     apps,
@@ -199,7 +229,7 @@ function handle(command: string, args: Record<string, unknown>): unknown {
   const s = state;
   switch (command) {
     case 'app_info':
-      return { version: '2.0.0', dataDir: 'C:\\Users\\Ed\\AppData\\Roaming\\UltimateWindowsDesktopSettings', platform: 'preview' };
+      return { version: '2.1.0', dataDir: 'C:\\Users\\Ed\\AppData\\Roaming\\UltimateWindowsDesktopSettings', platform: 'preview' };
     case 'get_preferences':
       return s.preferences;
     case 'set_preferences':
@@ -235,7 +265,7 @@ function handle(command: string, args: Record<string, unknown>): unknown {
     case 'set_startup_enabled': {
       const item = s.startup.find((i) => i.id === args.id);
       if (!item) throw new Error('Not found');
-      if (!item.editable) throw new Error('This entry is installed for all users. Change it in Task Manager > Startup apps (needs admin rights).');
+      if (!item.editable) throw new Error('This entry runs only once. Remove it instead if you don\'t want it to run.');
       item.enabled = Boolean(args.enabled);
       return s.startup;
     }
@@ -243,14 +273,18 @@ function handle(command: string, args: Record<string, unknown>): unknown {
       const name = String(args.name).trim();
       const cmd = String(args.command).trim();
       if (!name || !cmd) throw new Error('Name and program path cannot be empty.');
-      if (s.startup.some((i) => i.name.toLowerCase() === name.toLowerCase())) throw new Error(`A startup entry named "${name}" already exists.`);
-      s.startup.push({ id: `user-run:${name}`, name, command: cmd, source: 'userRun', enabled: true, editable: true });
+      if (s.startup.some((i) => i.source === 'userRun' && i.name.toLowerCase() === name.toLowerCase())) throw new Error(`A startup entry named "${name}" already exists.`);
+      s.startup.push({ id: `user-run:${name}`, name, command: cmd, source: 'userRun', enabled: true, editable: true, removable: true, needsAdmin: false, location: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run' });
       s.startup.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
       return s.startup;
     }
-    case 'remove_startup':
-      s.startup = s.startup.filter((i) => i.id !== args.id || !i.editable);
+    case 'remove_startup': {
+      const item = s.startup.find((i) => i.id === args.id);
+      if (!item) throw new Error('Not found');
+      if (!item.removable) throw new Error('This entry can only be turned off here.');
+      s.startup = s.startup.filter((i) => i.id !== args.id);
       return s.startup;
+    }
     case 'audio_state':
       return s.audio;
     case 'set_master_volume':
@@ -272,14 +306,35 @@ function handle(command: string, args: Record<string, unknown>): unknown {
         { name: 'Built-in Display', device: '\\\\.\\DISPLAY1', width: 1920, height: 1080, refreshHz: 144, scalePercent: 125, primary: true },
         { name: 'LG HDR WFHD', device: '\\\\.\\DISPLAY2', width: 2560, height: 1080, refreshHz: 75, scalePercent: 100, primary: false },
       ];
-    case 'list_tweaks':
-      return s.tweaks;
-    case 'set_tweak': {
-      const t = s.tweaks.find((x) => x.id === args.id);
-      if (!t) throw new Error('Not found');
-      t.enabled = Boolean(args.enabled);
-      return s.tweaks;
+    case 'list_settings':
+      return s.settings.filter((t) => t.page === args.page);
+    case 'set_setting': {
+      const t = s.settings.find((x) => x.id === args.id);
+      if (!t) throw new Error(`Not found: setting ${String(args.id)}`);
+      const value = Number(args.value);
+      if (t.range) {
+        if (!(value >= t.range.min && value <= t.range.max)) throw new Error(`${t.title} can't be ${value}`);
+        t.value = value;
+      } else {
+        if (!Number.isInteger(value) || value < 0 || value >= t.options.length) throw new Error(`Invalid input: option ${value} of ${t.id}`);
+        t.selected = value;
+        t.enabled = t.toggle && value === 1;
+      }
+      return s.settings.filter((x) => x.page === t.page);
     }
+    case 'restart_explorer':
+      return null;
+    case 'power_info':
+      return s.power;
+    case 'set_power_plan':
+      if (!s.power.plans.some((p) => p.id === args.id)) throw new Error('Not found: power plan');
+      s.power.plans.forEach((p) => (p.active = p.id === args.id));
+      return s.power;
+    case 'get_wallpaper':
+      return s.wallpaper;
+    case 'set_wallpaper':
+      s.wallpaper = String(args.path);
+      return s.wallpaper;
     case 'bluetooth_state':
       return {
         service: s.bluetoothService,

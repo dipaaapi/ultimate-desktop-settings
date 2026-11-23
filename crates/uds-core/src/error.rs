@@ -10,6 +10,8 @@ pub enum Error {
     NotFound(String),
     #[error("Invalid input: {0}")]
     Invalid(String),
+    #[error("Windows needs admin rights for this change.")]
+    AccessDenied,
     #[error("This feature only works on Windows.")]
     Unsupported,
     #[error("File error: {0}")]
@@ -21,6 +23,16 @@ pub enum Error {
 impl Error {
     pub fn msg(message: impl Into<String>) -> Self {
         Self::Message(message.into())
+    }
+
+    /// The change failed only because this process isn't running as admin,
+    /// so retrying through a UAC prompt can help.
+    pub fn is_access_denied(&self) -> bool {
+        match self {
+            Error::AccessDenied => true,
+            Error::Io(e) => e.kind() == std::io::ErrorKind::PermissionDenied,
+            _ => false,
+        }
     }
 }
 

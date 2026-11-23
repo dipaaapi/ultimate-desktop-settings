@@ -16,9 +16,11 @@ import type {
   NoteMeta,
   Overview,
   Placement,
+  PowerInfo,
   Preferences,
   RecycleBinSummary,
   ShortcutInfo,
+  SettingsPage,
   StartupItem,
   TempSummary,
   Tone,
@@ -67,8 +69,15 @@ export const api = {
   setAppMute: (pid: number, muted: boolean) => call<AudioState>('set_app_mute', { pid, muted }),
 
   listDisplays: () => call<DisplayInfo[]>('list_displays'),
-  listTweaks: () => call<TweakState[]>('list_tweaks'),
-  setTweak: (id: string, enabled: boolean) => call<TweakState[]>('set_tweak', { id, enabled }),
+  /** Every setting on one board. */
+  listSettings: (page: SettingsPage) => call<TweakState[]>('list_settings', { page }),
+  /** Option index for switches (0 off, 1 on) and choices, or the number for sliders. Returns the board's settings. */
+  setSetting: (id: string, value: number) => call<TweakState[]>('set_setting', { id, value }),
+  restartExplorer: () => call<void>('restart_explorer'),
+  powerInfo: () => call<PowerInfo>('power_info'),
+  setPowerPlan: (id: string) => call<PowerInfo>('set_power_plan', { id }),
+  getWallpaper: () => call<string | null>('get_wallpaper'),
+  setWallpaper: (path: string) => call<string | null>('set_wallpaper', { path }),
 
   bluetoothState: () => call<BluetoothState>('bluetooth_state'),
   controlBluetooth: (start: boolean) => call<void>('control_bluetooth', { start }),
@@ -117,6 +126,18 @@ export async function pickExecutable(): Promise<string | null> {
     multiple: false,
     directory: false,
     filters: [{ name: 'Programs', extensions: ['exe', 'bat', 'cmd', 'lnk'] }],
+  });
+  return typeof picked === 'string' ? picked : null;
+}
+
+/** Lets the user pick a picture for the desktop background. */
+export async function pickPicture(): Promise<string | null> {
+  if (!isDesktop) return 'C:\\Users\\Ed\\Pictures\\Wallpapers\\mountains.jpg';
+  const { open } = await import('@tauri-apps/plugin-dialog');
+  const picked = await open({
+    multiple: false,
+    directory: false,
+    filters: [{ name: 'Pictures', extensions: ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'jfif', 'webp'] }],
   });
   return typeof picked === 'string' ? picked : null;
 }

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { api } from './api';
+import { api, isDesktop } from './api';
 import type { Preferences } from './types';
 
 interface PrefsContext {
@@ -23,6 +23,13 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     if (theme === 'system') root.removeAttribute('data-theme');
     else root.setAttribute('data-theme', theme);
   }, [preferences?.theme]);
+
+  // The desktop app zooms its window from Rust; the browser preview zooms the page.
+  useEffect(() => {
+    if (isDesktop) return;
+    const scale = preferences?.uiScale ?? 1;
+    document.documentElement.style.setProperty('zoom', scale === 1 ? '' : String(scale));
+  }, [preferences?.uiScale]);
 
   const update = useCallback(async (next: Preferences) => {
     setPreferences(next);

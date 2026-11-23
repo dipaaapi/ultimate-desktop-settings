@@ -13,6 +13,7 @@ pub mod bluetooth;
 pub mod browsers;
 pub mod config;
 pub mod error;
+pub mod live;
 pub mod nightlight;
 pub mod notes;
 pub mod registry;

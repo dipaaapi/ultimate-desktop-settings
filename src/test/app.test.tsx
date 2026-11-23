@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '../App';
 import { PreferencesProvider } from '../lib/theme';
@@ -60,5 +60,20 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Shut down' }));
     // The preview cannot quit; it says so instead.
     expect(await screen.findByText(/works in the Windows app/)).toBeInTheDocument();
+  });
+});
+
+describe('App size', () => {
+  it('saves the size picked on the slider', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(screen.getByRole('button', { name: /^Preferences:/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'Preferences' });
+    const slider = await within(dialog).findByRole('slider', { name: 'App size' });
+    // jsdom range inputs ignore arrow keys, so set the value and release the key.
+    fireEvent.change(slider, { target: { value: '110' } });
+    fireEvent.keyUp(slider);
+    await waitFor(() => expect(within(dialog).getByText(/^110%/)).toBeInTheDocument());
+    await waitFor(() => expect(document.documentElement.style.getPropertyValue('zoom')).toBe('1.1'));
   });
 });
